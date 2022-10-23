@@ -10,6 +10,13 @@
 
 - NodeJS
 
+## Database
+
+```sh
+MongoDB
+
+```
+
 ## 🗳 Install
 
 ```sh

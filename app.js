@@ -166,6 +166,53 @@ app.delete("/user/:id", async (req, res) => {
   }
 });
 
+// Sign in
+
+app.post("/auth/signin", async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username) {
+    return res.status(422).json({ msg: "Insira ao menos um login!" });
+  }
+
+  if (!password) {
+    return res.status(422).json({ msg: "Insira ao menos uma Senha!" });
+  }
+
+  // Check if user exists
+  const user = await User.findOne({ username: username }); // verify username
+
+  if (!user) {
+    return res.status(404).json({ msg: "Usuário não encontrado!" });
+  }
+
+  // Check if password match
+  const checkPass = await bcrypt.compare(password, user.password);
+
+  if (!checkPass) {
+    return res.status(422).json({ msg: "Senha inválida!" });
+  }
+
+  try {
+    const secret = process.env.SECRET_HASH;
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+      },
+      secret
+    );
+    res
+      .status(200)
+      .json({ msg: "Authenticação realizada com sucesso!", user, token });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ msg: "Erro com o servidor, tente novamente mais tarde!" });
+  }
+});
+
 // Connection to database
 mongoose
   .connect(`${process.env.MONGO_URL}`)
