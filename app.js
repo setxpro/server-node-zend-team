@@ -90,6 +90,82 @@ app.post("/auth/create", async (req, res) => {
   }
 });
 
+// Find One User
+app.get("/users/:id", async (req, res) => {
+  const _id = req.params.id;
+  const user = await User.findById(_id, "-password");
+  if (!user) {
+    return res.status(404).json({ message: "Usuário não encontrado!." });
+  }
+  res.status(200).json({ user });
+});
+
+// Find All Users
+app.get("/users", async (req, res) => {
+  const users = await User.find();
+
+  if (!users) {
+    return res
+      .status(404)
+      .json({ message: "Não há usuários cadastrados no sistema." });
+  }
+  res.status(200).json({ users });
+});
+
+// Update User
+app.patch("/user/:id", async (req, res) => {
+  const _id = req.params.id;
+  const { name, username, email, phone, password, role, assignment, avatar } =
+    req.body;
+
+  const salt = await bcrypt.genSalt(12);
+  const passwordHash = await bcrypt.hash(password, salt);
+
+  const user = {
+    name,
+    username,
+    email,
+    phone,
+    password: passwordHash,
+    role,
+    assignment,
+    avatar,
+  };
+
+  try {
+    const userUpdate = await User.updateOne({ _id }, user);
+    if (userUpdate) {
+      res.status(200).json({ message: "Usuário Atualizado com Sucesso!" });
+      return;
+    }
+    if (userUpdate.matchedCount === 0) {
+      res.status(422).json({ message: "Não foi possível alterar o usuário" });
+      return;
+    }
+    res.status(200).json(userUpdate);
+  } catch (error) {
+    res.status(500).json({ error: error });
+  }
+});
+
+// Delete User By ID
+app.delete("/user/:id", async (req, res) => {
+  const _id = req.params.id;
+  const user = await User.findOne({ _id });
+
+  if (!user) {
+    res.status(404).json({ error: "Usuário não encontrado!" });
+    return;
+  }
+
+  try {
+    await User.deleteOne({ _id });
+    res.status(200).json({ message: "Usuário deletado com Sucesso!" });
+  } catch (error) {
+    res.status(500).json({ error: error });
+  }
+});
+
 // Connection to database
 mongoose
   .connect(`${process.env.MONGO_URL}`)
