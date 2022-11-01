@@ -6,6 +6,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const User = require("./Models/User");
+const Support = require("./Models/Support");
+const MessageClient = require("./Models/MessageNewClient");
 
 const app = express();
 
@@ -21,7 +23,61 @@ app.use(express.json());
 //   next();
 // });
 app.use(cors());
-// Create user
+
+// Create Support
+app.post("/support/create", async (req, res) => {
+  const { type, comment, screenshot } = req.body;
+
+  if (!comment) {
+    return res.status(422).json({ message: "Comentário é Obrigatório!" });
+  }
+
+  const support = new Support({
+    type,
+    comment,
+    screenshot,
+  });
+
+  try {
+    await Support.create(support);
+    res.status(200).json({ message: "Mensagem enviada com sucesso!" });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+// Message
+app.post("/message-client/create", async (req, res) => {
+  const { name, email, phone, message } = req.body;
+
+  if (!name) {
+    return res.status(422).json({ message: "Nome é Obrigatório!" });
+  }
+  if (!email) {
+    return res.status(422).json({ message: "Email é Obrigatório!" });
+  }
+  if (!phone) {
+    return res.status(422).json({ message: "Telefone é Obrigatório!" });
+  }
+  if (!message) {
+    return res.status(422).json({ message: "Mensagem é Obrigatório!" });
+  }
+
+  const messageClient = new MessageClient({
+    name,
+    email,
+    phone,
+    message,
+  });
+
+  try {
+    await MessageClient.create(messageClient);
+    res.status(200).json({ message: "Mensagem enviada com sucesso!" });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 app.post("/auth/create", async (req, res) => {
   const { name, username, email, phone, password, role, assignment, avatar } =
     req.body;
@@ -210,6 +266,86 @@ app.post("/auth/signin", async (req, res) => {
     res
       .status(500)
       .json({ msg: "Erro com o servidor, tente novamente mais tarde!" });
+  }
+});
+
+// Find All Supports
+app.get("/support", async (req, res) => {
+  const support = await Support.find();
+
+  if (!support) {
+    return res
+      .status(404)
+      .json({ message: "Não há usuários cadastrados no sistema." });
+  }
+  res.status(200).json({ support });
+});
+
+// Find All Message Client
+app.get("/client-message", async (req, res) => {
+  const clientMessage = await MessageClient.find();
+
+  if (!clientMessage) {
+    return res
+      .status(404)
+      .json({ message: "Não há usuários cadastrados no sistema." });
+  }
+  res.status(200).json({ clientMessage });
+});
+
+// Find One Message Client
+app.get("/client-message/:id", async (req, res) => {
+  const _id = req.params.id;
+  const clientMessage = await MessageClient.findById(_id);
+  if (!clientMessage) {
+    return res.status(404).json({ message: "Mensagem não encontrada!." });
+  }
+  res.status(200).json({ clientMessage });
+});
+
+// Delete Message Client By ID
+app.delete("/client-message/:id", async (req, res) => {
+  const _id = req.params.id;
+  const clientMessage = await MessageClient.findOne({ _id });
+
+  if (!clientMessage) {
+    res.status(404).json({ error: "Support não encontrado!" });
+    return;
+  }
+
+  try {
+    await Support.deleteOne({ _id });
+    res.status(200).json({ message: "Support deletado com Sucesso!" });
+  } catch (error) {
+    res.status(500).json({ error: error });
+  }
+});
+
+// Get onde Support by id
+app.get("/support/:id", async (req, res) => {
+  const _id = req.params.id;
+  const support = await Support.findById(_id);
+  if (!support) {
+    return res.status(404).json({ message: "Usuário não encontrado!." });
+  }
+  res.status(200).json({ support });
+});
+
+// Delete Support By ID
+app.delete("/support/:id", async (req, res) => {
+  const _id = req.params.id;
+  const support = await Support.findOne({ _id });
+
+  if (!support) {
+    res.status(404).json({ error: "Support não encontrado!" });
+    return;
+  }
+
+  try {
+    await Support.deleteOne({ _id });
+    res.status(200).json({ message: "Support deletado com Sucesso!" });
+  } catch (error) {
+    res.status(500).json({ error: error });
   }
 });
 
